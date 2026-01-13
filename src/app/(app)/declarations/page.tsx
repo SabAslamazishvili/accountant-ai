@@ -123,13 +123,6 @@ export default async function DeclarationsPage() {
                       </div>
                     )}
                   </div>
-
-                  {declaration.notes && (
-                    <div className="mt-3 text-sm text-gray-600">
-                      <p className="font-medium">Notes:</p>
-                      <p>{declaration.notes}</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-2 ml-4">
