@@ -202,6 +202,8 @@ export async function POST(
       )
 
     } catch (processingError: any) {
+      console.error("Processing error details:", processingError)
+
       // Update statement with error
       await prisma.bankStatement.update({
         where: { id },
@@ -212,15 +214,21 @@ export async function POST(
       })
 
       return NextResponse.json(
-        { error: processingError.message || 'Processing failed' },
+        {
+          error: processingError.message || 'Processing failed',
+          details: processingError.stack || String(processingError)
+        },
         { status: 500 }
       )
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Processing error:", error)
     return NextResponse.json(
-      { error: "An error occurred during processing" },
+      {
+        error: "An error occurred during processing",
+        details: error?.message || String(error)
+      },
       { status: 500 }
     )
   }
