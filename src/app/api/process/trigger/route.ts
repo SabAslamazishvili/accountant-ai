@@ -59,6 +59,10 @@ export async function POST(req: Request) {
 
     // Trigger processing by calling the processing endpoint
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+
+    console.log('Triggering processing for statement:', statement_id)
+    console.log('Base URL:', baseUrl)
+
     const response = await fetch(`${baseUrl}/api/process/statement/${statement_id}`, {
       method: 'POST',
       headers: {
@@ -67,15 +71,19 @@ export async function POST(req: Request) {
       }
     })
 
+    const result = await response.json()
+
+    console.log('Processing response:', response.status, result)
+
     if (!response.ok) {
-      const errorData = await response.json()
       return NextResponse.json(
-        { error: errorData.error || 'Processing failed to start' },
+        {
+          error: result.error || 'Processing failed to start',
+          details: result.details || 'No additional details'
+        },
         { status: response.status }
       )
     }
-
-    const result = await response.json()
 
     return NextResponse.json(
       {
@@ -86,10 +94,13 @@ export async function POST(req: Request) {
       { status: 200 }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Trigger error:", error)
     return NextResponse.json(
-      { error: "An error occurred" },
+      {
+        error: "An error occurred",
+        details: error?.message || String(error)
+      },
       { status: 500 }
     )
   }
