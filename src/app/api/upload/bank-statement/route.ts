@@ -111,6 +111,14 @@ export async function POST(req: Request) {
       }
     })
 
+    // Trigger async processing (fire and forget)
+    fetch(`${process.env.NEXTAUTH_URL}/api/process/statement/${statement.id}`, {
+      method: 'POST',
+      headers: {
+        'Cookie': req.headers.get('cookie') || ''
+      }
+    }).catch(err => console.error('Processing trigger failed:', err))
+
     return NextResponse.json(
       {
         statement: {
