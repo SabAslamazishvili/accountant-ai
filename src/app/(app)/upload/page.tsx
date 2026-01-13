@@ -56,13 +56,12 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <Link href="/dashboard">
-            <Button variant="secondary">← Back to Dashboard</Button>
-          </Link>
-        </div>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Link href="/dashboard">
+          <Button variant="secondary">← Back to Dashboard</Button>
+        </Link>
+      </div>
 
         <Card>
           <h1 className="text-2xl font-bold mb-6">Upload Bank Statement</h1>
@@ -168,7 +167,6 @@ export default function UploadPage() {
             </ol>
           </div>
         </Card>
-      </div>
     </div>
   )
 }
