@@ -1,0 +1,171 @@
+// This is your Prisma schema file
+// Learn more about it: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL") // Vercel Postgres automatically sets this
+  directUrl = env("POSTGRES_URL_NON_POOLING") // For migrations
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String?   @map("password_hash")
+  name           String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  emailVerified  Boolean   @default(false) @map("email_verified")
+  oauthProvider  String?   @map("oauth_provider")
+  oauthId        String?   @map("oauth_id")
+
+  businesses            Business[]
+  notificationSettings  NotificationSettings?
+  notifications         Notification[]
+  auditLogs             AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Business {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  companyName      String    @map("company_name")
+  tin              String
+  businessType     String?   @map("business_type")
+  registrationDate DateTime? @map("registration_date")
+  rsGeUsername     String?   @map("rs_ge_username")
+  rsGePassword     String?   @map("rs_ge_password")
+  preferredBanks   String[]  @map("preferred_banks")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user            User              @relation(fields: [userId], references: [id])
+  bankStatements  BankStatement[]
+  declarations    Declaration[]
+  auditLogs       AuditLog[]
+
+  @@index([userId])
+  @@index([tin])
+  @@map("businesses")
+}
+
+model BankStatement {
+  id                 String    @id @default(uuid())
+  businessId         String    @map("business_id")
+  month              Int
+  year               Int
+  bankSource         String    @map("bank_source")
+  fileUrl            String    @map("file_url")
+  fileName           String    @map("file_name")
+  uploadDate         DateTime  @default(now()) @map("upload_date")
+  status             String    @default("uploaded")
+  processedAt        DateTime? @map("processed_at")
+  errorMessage       String?   @map("error_message")
+  totalTransactions  Int?      @map("total_transactions")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  business      Business       @relation(fields: [businessId], references: [id])
+  transactions  Transaction[]
+  declarations  Declaration[]
+
+  @@index([businessId, month, year])
+  @@map("bank_statements")
+}
+
+model Transaction {
+  id                String   @id @default(uuid())
+  bankStatementId   String   @map("bank_statement_id")
+  transactionDate   DateTime @map("transaction_date")
+  description       String
+  amount            Decimal  @db.Decimal(15, 2)
+  currency          String   @default("GEL")
+  aiCategory        String?  @map("ai_category")
+  aiConfidence      Decimal? @map("ai_confidence") @db.Decimal(3, 2)
+  userEdited        Boolean  @default(false) @map("user_edited")
+  finalCategory     String?  @map("final_category")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  bankStatement BankStatement @relation(fields: [bankStatementId], references: [id])
+
+  @@index([bankStatementId])
+  @@map("transactions")
+}
+
+model Declaration {
+  id                  String    @id @default(uuid())
+  businessId          String    @map("business_id")
+  bankStatementId     String    @map("bank_statement_id")
+  declarationType     String    @map("declaration_type")
+  month               Int
+  year                Int
+  status              String    @default("draft")
+  generatedAt         DateTime  @default(now()) @map("generated_at")
+  reviewedAt          DateTime? @map("reviewed_at")
+  submittedAt         DateTime? @map("submitted_at")
+  rsGeConfirmation    String?   @map("rs_ge_confirmation")
+  taxAmount           Decimal   @db.Decimal(15, 2) @map("tax_amount")
+  declarationData     Json      @map("declaration_data")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  business      Business      @relation(fields: [businessId], references: [id])
+  bankStatement BankStatement @relation(fields: [bankStatementId], references: [id])
+  notifications Notification[]
+
+  @@index([businessId])
+  @@index([businessId, month, year])
+  @@map("declarations")
+}
+
+model NotificationSettings {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  emailReminders       Boolean  @default(true) @map("email_reminders")
+  inAppReminders       Boolean  @default(true) @map("in_app_reminders")
+  reminderDaysBefore   Int      @default(7) @map("reminder_days_before")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notification_settings")
+}
+
+model Notification {
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  type                 String
+  title                String
+  message              String
+  read                 Boolean   @default(false)
+  emailSent            Boolean   @default(false) @map("email_sent")
+  relatedDeclarationId String?   @map("related_declaration_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+
+  user               User         @relation(fields: [userId], references: [id])
+  relatedDeclaration Declaration? @relation(fields: [relatedDeclarationId], references: [id])
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  businessId String?  @map("business_id")
+  action     String
+  details    Json
+  ipAddress  String   @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User      @relation(fields: [userId], references: [id])
+  business Business? @relation(fields: [businessId], references: [id])
+
+  @@index([userId])
+  @@map("audit_log")
+}
