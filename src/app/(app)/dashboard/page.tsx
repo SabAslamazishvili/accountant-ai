@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { ProcessStatementButton } from '@/components/ProcessStatementButton'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -133,13 +134,18 @@ export default async function DashboardPage() {
               ) : (
                 statements.map(statement => (
                   <div key={statement.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{statement.bankSource.toUpperCase()} - {statement.month}/{statement.year}</p>
                       <p className="text-sm text-gray-500">{statement.fileName}</p>
                     </div>
-                    <Badge variant={getBadgeVariant(statement.status)}>
-                      {statement.status}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={getBadgeVariant(statement.status)}>
+                        {statement.status}
+                      </Badge>
+                      {statement.status === 'uploaded' && (
+                        <ProcessStatementButton statementId={statement.id} />
+                      )}
+                    </div>
                   </div>
                 ))
               )}
