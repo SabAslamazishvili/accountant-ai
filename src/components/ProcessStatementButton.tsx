@@ -29,12 +29,14 @@ export function ProcessStatementButton({ statementId }: ProcessStatementButtonPr
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Processing failed')
+        const errorMsg = data.details ? `${data.error}: ${data.details}` : (data.error || 'Processing failed')
+        throw new Error(errorMsg)
       }
 
       // Refresh the page to show updated status
       router.refresh()
     } catch (err: any) {
+      console.error('Processing error:', err)
       setError(err.message || 'An error occurred')
     } finally {
       setLoading(false)
